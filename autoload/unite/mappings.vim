@@ -92,6 +92,9 @@ function! unite#mappings#define_default_mappings()"{{{
   nmap <buffer><expr> e   unite#mappings#smart_map('e', "\<Plug>(unite_do_narrow_action)")
   nmap <buffer><expr> l   unite#mappings#smart_map('l', "\<Plug>(unite_do_default_action)")
   nmap <buffer><expr> p    unite#mappings#smart_map('p', "\<Plug>(unite_do_preview_action)")
+  for i in range(1, 9)
+    execute "nmap <buffer><expr> " . i . " unite#mappings#jump(" . i . ")"
+  endfor
 
   " Visual mode key-mappings.
   xmap <buffer> <Space>   <Plug>(unite_toggle_mark_selected_candidates)
@@ -192,6 +195,10 @@ function! unite#mappings#do_action(action_name)"{{{
 endfunction"}}}
 function! unite#mappings#smart_map(narrow_map, select_map)"{{{
   return (line('.') <= 2 && empty(unite#get_marked_candidates())) ? a:narrow_map : a:select_map
+endfunction"}}}
+function! unite#mappings#jump(index)"{{{
+  return "\<Plug>(unite_cursor_top)" . repeat("\<Plug>(unite_loop_cursor_down)", a:index + 1) .
+        \ "\<Plug>(unite_do_default_action)"
 endfunction"}}}
 function! s:exit()"{{{
   call unite#quit_session()
