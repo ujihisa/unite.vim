@@ -390,17 +390,19 @@ function! unite#get_marked_candidates() "{{{
   return sort(filter(copy(unite#get_unite_candidates()), 'v:val.unite__is_marked'), 's:compare_marked_candidates')
 endfunction"}}}
 function! unite#keyword_filter(list, input)"{{{
+  let memo = []
   for l:input in split(a:input, '\\\@<! ')
+    let tmp = copy(a:list)
     let l:input = substitute(l:input, '\\ ', ' ', 'g')
 
     if l:input =~ '^!'
       " Exclusion.
       let l:input = unite#escape_match(l:input)
-      call filter(a:list, 'v:val.word !~ ' . string(l:input[1:]))
+      call filter(tmp, 'v:val.word !~ ' . string(l:input[1:]))
     elseif l:input =~ '\\\@<!\*'
       " Wildcard.
       let l:input = unite#escape_match(l:input)
-      call filter(a:list, 'v:val.word =~ ' . string(l:input))
+      call filter(tmp, 'v:val.word =~ ' . string(l:input))
     else
       let l:input = substitute(l:input, '\\\(.\)', '\1', 'g')
       if &ignorecase
@@ -409,11 +411,30 @@ function! unite#keyword_filter(list, input)"{{{
         let l:expr = printf('stridx(v:val.word, %s) != -1', string(l:input))
       endif
 
-      call filter(a:list, l:expr)
+      call filter(tmp, l:expr)
+    endif
+    let memo = s:set_plus(memo, tmp)
+  endfor
+  call s:replace(a:list, memo)
+
+  return memo
+endfunction"}}}
+function! s:set_plus(x, y)"{{{
+  " [2, 3, 4] plus [1, 2, 3] is [2, 3, 4, 1]
+  let z = copy(a:x)
+  for e in a:y
+    if index(z, e) == -1
+      call add(z, e)
     endif
   endfor
-
-  return a:list
+  return z
+endfunction"}}}
+function! s:replace(x, y)"{{{
+  " let x = y, destructive
+  call remove(a:x, 0, -1)
+  for e in a:y
+    call add(a:x, e)
+  endfor
 endfunction"}}}
 function! unite#get_input()"{{{
   " Prompt check.
